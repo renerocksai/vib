@@ -15,7 +15,7 @@ fn print_help(exe_name: []const u8) !void {
         \\
         \\Options are:
         \\  -e, --exec     : name of the executable (browser) to launch.
-        \\  -s, --max-size : max size of memory for input. Default: 10MB
+        \\  -s, --max-size : max size of memory for input in bytes. Default: 10MB
         \\  -p, --prefix   : optional prefix for temp file names. Default: vib-
         \\  -t, --tmpdir   : temp dir to write to. Default: /tmp
         \\  -o, --output   : optional path to write to instead of temp file
@@ -95,8 +95,10 @@ pub fn main() anyerror!void {
     }, alloc, .print)) |options| {
         defer options.deinit();
 
+        const o = options.options;
+
         // check options for --help
-        if (options.options.help) {
+        if (o.help or (o.output == null and o.exec == null)) {
             try print_help(options.executable_name orelse "vib");
             return;
         }
@@ -106,7 +108,6 @@ pub fn main() anyerror!void {
         _ = html;
 
         // work out the temp filename
-        const o = options.options;
         const output_fn = try makeTempFileName(alloc, o.output, o.tmpdir, o.prefix);
 
         // write html into temp file

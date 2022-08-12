@@ -1,8 +1,11 @@
-
 # vib - view in browser
 
 A minimalistic tool for [the aerc e-mail client](https://aerc-mail.org) that
 displays messages piped from aerc in your favourite browser.
+
+After contemplating writing a shell script for this purpose, I figured it would
+only take a little longer to write it in zig, allowing me to share
+shell-agnostic statically linked binaries. Just in case you're wondering 😊.
 
 # Contributing
 
@@ -43,18 +46,26 @@ file to `vib.exe`.
 After [downloading](#getting-it) or [building it](#building-it), and making sure
 the `vib` command is in your PATH, configure aerc to use vib:
 
-In your aerc's **binds.conf**, ...
-
-TO BE WRITTEN
+In your aerc's **binds.conf**, place your preferred shortcut in the `[view]`
+section like this:
 
 ```console
+[view]
+
+...
+
+B = :pipe -b -p vib -e sensible-browser<Enter>
 ```
 
 If `vib` is not in your path, you may optionally specify the full path to
 vib like so:
 
 ```console
+B = :pipe -b -p /home/rs/vib -e sensible-browser<Enter>
 ```
+
+When you open a message now, **and select its HTML part**, you can view it in
+the browser!
 
 Vib reads the message (part) piped to it from aerc, dumps it into a temporary
 file, and launches a browser.
@@ -62,10 +73,11 @@ file, and launches a browser.
 ```
 Options are:
   -e, --exec     : name of the executable (browser) to launch.
-  -s, --max-size : max size of memory for input. Default: 10MB
+  -s, --max-size : max size of memory for input in bytes. Default: 10MB
   -p, --prefix   : optional prefix for temp file names. Default: vib-
   -t, --tmpdir   : temp dir to write to. Default: /tmp
   -o, --output   : optional path to write to instead of temp file
+
 
 Examples:
 vib -e sensible-browser
