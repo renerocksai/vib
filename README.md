@@ -55,14 +55,14 @@ section like this:
 # ... existing stuff ...
 
 # on B, pipe the message part to vib
-B = :pipe -b -p vib -e sensible-browser<Enter>
+B = :pipe -b -p vib -e sensible-browser -c<Enter>
 ```
 
 If `vib` is not in your path, you may optionally specify the full path to
 vib like so:
 
 ```console
-B = :pipe -b -p /home/rs/vib -e sensible-browser<Enter>
+B = :pipe -b -p /home/rs/vib -e sensible-browser -c<Enter>
 ```
 
 When you open a message now, **and select its HTML part**, you can view it in
