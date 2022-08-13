@@ -1,1 +1,1 @@
-pub const version_string = "";
+pub const version_string = "v0.1.0";

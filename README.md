@@ -52,8 +52,9 @@ section like this:
 ```console
 [view]
 
-...
+# ... existing stuff ...
 
+# on B, pipe the message part to vib
 B = :pipe -b -p vib -e sensible-browser<Enter>
 ```
 
@@ -65,29 +66,32 @@ B = :pipe -b -p /home/rs/vib -e sensible-browser<Enter>
 ```
 
 When you open a message now, **and select its HTML part**, you can view it in
-the browser!
+the browser by pressing <kbd>B</kbd>.
 
 Vib reads the message (part) piped to it from aerc, dumps it into a temporary
 file, and launches a browser.
 
 ```
 Options are:
-  -e, --exec     : name of the executable (browser) to launch.
+  -e, --exec     : optional name of the executable (browser) to launch
   -s, --max-size : max size of memory for input in bytes. Default: 10MB
   -p, --prefix   : optional prefix for temp file names. Default: vib-
   -t, --tmpdir   : temp dir to write to. Default: /tmp
   -o, --output   : optional path to write to instead of temp file
-
+  -c, --cleanup  : delete all of vib's temp files before creating a new one
 
 Examples:
 vib -e sensible-browser
+  Launch the sensible-browser, use defaults for all options.
 
-vib -e sensible-browser -t /tmp/vib-messages
+vib -e firefox -c -t /tmp/vib-messages
+  Delete vib's temp files from previous runs, then create a new one
+  and launch firefox with the piped-in message.
 
 vib -o /tmp/current-message.html
   Launch no browser, just write to /tmp/current-message.html
   This allows you to leave the browser open on the same page,
-  while using vib
+  while using vib to refresh the content.
 ```
 
 # Building it

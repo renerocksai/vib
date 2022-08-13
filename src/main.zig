@@ -14,21 +14,25 @@ fn print_help(exe_name: []const u8) !void {
         \\launches a browser.
         \\
         \\Options are:
-        \\  -e, --exec     : name of the executable (browser) to launch.
+        \\  -e, --exec     : optional name of the executable (browser) to launch
         \\  -s, --max-size : max size of memory for input in bytes. Default: 10MB
         \\  -p, --prefix   : optional prefix for temp file names. Default: vib-
         \\  -t, --tmpdir   : temp dir to write to. Default: /tmp
         \\  -o, --output   : optional path to write to instead of temp file
+        \\  -c, --cleanup  : delete all of vib's temp files before creating a new one
         \\
         \\Examples:
         \\vib -e sensible-browser
+        \\  Launch the sensible-browser, use defaults for all options.
         \\
-        \\vib -e sensible-browser -t /tmp/vib-messages
+        \\vib -e firefox -c -t /tmp/vib-messages
+        \\  Delete vib's temp files from previous runs, then create a new one
+        \\  and launch firefox with the piped-in message.
         \\
         \\vib -o /tmp/current-message.html
         \\  Launch no browser, just write to /tmp/current-message.html
         \\  This allows you to leave the browser open on the same page,
-        \\  while using vib
+        \\  while using vib to refresh the content.
         \\
     );
 }
@@ -73,6 +77,19 @@ fn launchBrowser(alloc: std.mem.Allocator, browser: []const u8, url: []const u8)
     }
 }
 
+/// Cleans vib files from tmpdir
+fn cleanup(alloc: std.mem.Allocator, tmpdir: []const u8, prefix: []const u8) !void {
+    _ = alloc;
+    const d = try std.fs.cwd().openDir(tmpdir, .{ .iterate = true });
+    var it = d.iterate();
+    while (try it.next()) |entry| {
+        if (entry.kind == .File and std.mem.startsWith(u8, entry.name, prefix)) {
+            std.debug.print("deleting ... {s}/{s}\n", .{ tmpdir, entry.name });
+            try d.deleteFile(entry.name);
+        }
+    }
+}
+
 pub fn main() anyerror!void {
     const alloc = std.heap.page_allocator;
     if (argsParser.parseForCurrentProcess(struct {
@@ -81,6 +98,7 @@ pub fn main() anyerror!void {
         tmpdir: []const u8 = "/tmp",
         prefix: []const u8 = "vib-",
         exec: ?[]const u8 = null,
+        cleanup: bool = false,
         @"max-size": u32 = MAX_FILE_SIZE,
         help: bool = false,
 
@@ -91,6 +109,7 @@ pub fn main() anyerror!void {
             .p = "prefix",
             .t = "tmpdir",
             .o = "output",
+            .c = "cleanup",
         };
     }, alloc, .print)) |options| {
         defer options.deinit();
@@ -98,7 +117,7 @@ pub fn main() anyerror!void {
         const o = options.options;
 
         // check options for --help
-        if (o.help or (o.output == null and o.exec == null)) {
+        if (o.help or (o.output == null and o.exec == null and o.cleanup == false)) {
             try print_help(options.executable_name orelse "vib");
             return;
         }
@@ -109,6 +128,11 @@ pub fn main() anyerror!void {
 
         // work out the temp filename
         const output_fn = try makeTempFileName(alloc, o.output, o.tmpdir, o.prefix);
+
+        // check if we need to clean up
+        if (o.output == null and o.cleanup) {
+            try cleanup(alloc, o.tmpdir, o.prefix);
+        }
 
         // write html into temp file
         try writeToFile(output_fn, html);
