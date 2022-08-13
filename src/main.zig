@@ -41,7 +41,6 @@ fn print_help(exe_name: []const u8) !void {
 /// returns the buffer
 fn readStdin(alloc: std.mem.Allocator, max_size: usize) ![]const u8 {
     const stdin = std.io.getStdIn().reader();
-
     return stdin.readAllAlloc(alloc, max_size);
 }
 
@@ -56,7 +55,6 @@ fn makeTempFileName(a: std.mem.Allocator, fname: ?[]const u8, tmpdir: []const u8
 
 /// Writes contents to temp file
 fn writeToFile(fname: []const u8, contents: []const u8) !void {
-    //
     var file = try std.fs.cwd().createFile(fname, .{});
     defer file.close();
     try file.writer().writeAll(contents);
@@ -69,8 +67,7 @@ fn launchBrowser(alloc: std.mem.Allocator, browser: []const u8, url: []const u8)
         url,
     };
 
-    if (std.ChildProcess.exec(.{ .argv = args[0..], .allocator = alloc })) |ret| {
-        _ = ret;
+    if (std.ChildProcess.exec(.{ .argv = args[0..], .allocator = alloc })) {
         return;
     } else |err| {
         std.log.err("Unable to spawn and wait:  {any}", .{err});
@@ -78,13 +75,11 @@ fn launchBrowser(alloc: std.mem.Allocator, browser: []const u8, url: []const u8)
 }
 
 /// Cleans vib files from tmpdir
-fn cleanup(alloc: std.mem.Allocator, tmpdir: []const u8, prefix: []const u8) !void {
-    _ = alloc;
+fn cleanup(tmpdir: []const u8, prefix: []const u8) !void {
     const d = try std.fs.cwd().openDir(tmpdir, .{ .iterate = true });
     var it = d.iterate();
     while (try it.next()) |entry| {
         if (entry.kind == .File and std.mem.startsWith(u8, entry.name, prefix)) {
-            std.debug.print("deleting ... {s}/{s}\n", .{ tmpdir, entry.name });
             try d.deleteFile(entry.name);
         }
     }
@@ -116,7 +111,7 @@ pub fn main() anyerror!void {
 
         const o = options.options;
 
-        // check options for --help
+        // check options for invoking help
         if (o.help or (o.output == null and o.exec == null and o.cleanup == false)) {
             try print_help(options.executable_name orelse "vib");
             return;
@@ -124,14 +119,13 @@ pub fn main() anyerror!void {
 
         // read html from stdin
         const html = try readStdin(alloc, MAX_FILE_SIZE);
-        _ = html;
 
         // work out the temp filename
         const output_fn = try makeTempFileName(alloc, o.output, o.tmpdir, o.prefix);
 
         // check if we need to clean up
         if (o.output == null and o.cleanup) {
-            try cleanup(alloc, o.tmpdir, o.prefix);
+            try cleanup(o.tmpdir, o.prefix);
         }
 
         // write html into temp file
