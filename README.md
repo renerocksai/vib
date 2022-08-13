@@ -74,7 +74,7 @@ file, and launches a browser.
 ```
 Options are:
   -e, --exec     : optional name of the executable (browser) to launch
-  -s, --max-size : max size of memory for input in bytes. Default: 10MB
+  -s, --max-size : max size of memory for input in bytes. Default: 32MB
   -p, --prefix   : optional prefix for temp file names. Default: vib-
   -t, --tmpdir   : temp dir to write to. Default: /tmp
   -o, --output   : optional path to write to instead of temp file
