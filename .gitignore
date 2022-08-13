@@ -2,3 +2,4 @@ zig-out/
 zig-cache/
 src/version.zig
 vib-releases/
+version.zig
