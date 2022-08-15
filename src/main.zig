@@ -45,11 +45,20 @@ fn readStdin(alloc: std.mem.Allocator, max_size: usize) ![]const u8 {
 }
 
 /// work out filename based on options
-fn makeTempFileName(a: std.mem.Allocator, fname: ?[]const u8, tmpdir: []const u8, prefix: []const u8) ![]const u8 {
+fn makeTempFileName(
+    a: std.mem.Allocator,
+    fname: ?[]const u8,
+    tmpdir: []const u8,
+    prefix: []const u8,
+) ![]const u8 {
     if (fname) |present| return present;
 
     const itime = std.time.milliTimestamp();
-    const filename = try std.fmt.allocPrint(a, "{s}/{s}{d}.html", .{ tmpdir, prefix, itime });
+    const filename = try std.fmt.allocPrint(
+        a,
+        "{s}/{s}{d}.html",
+        .{ tmpdir, prefix, itime },
+    );
     return filename;
 }
 
@@ -61,7 +70,11 @@ fn writeToFile(fname: []const u8, contents: []const u8) !void {
 }
 
 /// Launches browser with args
-fn launchBrowser(alloc: std.mem.Allocator, browser: []const u8, url: []const u8) !void {
+fn launchBrowser(
+    alloc: std.mem.Allocator,
+    browser: []const u8,
+    url: []const u8,
+) !void {
     const args = [_][]const u8{
         browser,
         url,
@@ -78,9 +91,9 @@ fn launchBrowser(alloc: std.mem.Allocator, browser: []const u8, url: []const u8)
 fn cleanup(tmpdir: []const u8, prefix: []const u8) !void {
     const d = try std.fs.cwd().openDir(tmpdir, .{ .iterate = true });
     var it = d.iterate();
-    while (try it.next()) |entry| {
-        if (entry.kind == .File and std.mem.startsWith(u8, entry.name, prefix)) {
-            try d.deleteFile(entry.name);
+    while (try it.next()) |f| {
+        if (f.kind == .File and std.mem.startsWith(u8, f.name, prefix)) {
+            try d.deleteFile(f.name);
         }
     }
 }
@@ -112,7 +125,9 @@ pub fn main() anyerror!void {
         const o = options.options;
 
         // check options for invoking help
-        if (o.help or (o.output == null and o.exec == null and o.cleanup == false)) {
+        if (o.help or
+            (o.output == null and o.exec == null and o.cleanup == false))
+        {
             try print_help(options.executable_name orelse "vib");
             return;
         }
@@ -121,7 +136,12 @@ pub fn main() anyerror!void {
         const html = try readStdin(alloc, MAX_FILE_SIZE);
 
         // work out the temp filename
-        const output_fn = try makeTempFileName(alloc, o.output, o.tmpdir, o.prefix);
+        const output_fn = try makeTempFileName(
+            alloc,
+            o.output,
+            o.tmpdir,
+            o.prefix,
+        );
 
         // check if we need to clean up
         if (o.output == null and o.cleanup) {
