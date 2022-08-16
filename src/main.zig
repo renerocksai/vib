@@ -15,7 +15,6 @@ fn print_help(exe_name: []const u8) !void {
         \\
         \\Options are:
         \\  -e, --exec     : optional name of the executable (browser) to launch
-        \\  -s, --max-size : max size of memory for input in bytes. Default: 32MB
         \\  -p, --prefix   : optional prefix for temp file names. Default: vib-
         \\  -t, --tmpdir   : temp dir to write to. Default: /tmp
         \\  -o, --output   : optional path to write to instead of temp file
@@ -35,13 +34,6 @@ fn print_help(exe_name: []const u8) !void {
         \\  while using vib to refresh the content.
         \\
     );
-}
-
-/// reads entire stdin, allocating via alloc a buffer of max size max_size.
-/// returns the buffer
-fn readStdin(alloc: std.mem.Allocator, max_size: usize) ![]const u8 {
-    const stdin = std.io.getStdIn().reader();
-    return stdin.readAllAlloc(alloc, max_size);
 }
 
 /// work out filename based on options
@@ -67,6 +59,35 @@ fn writeToFile(fname: []const u8, contents: []const u8) !void {
     var file = try std.fs.cwd().createFile(fname, .{});
     defer file.close();
     try file.writer().writeAll(contents);
+}
+
+/// Writes contents to temp file
+fn writeStdinToFile(
+    fname: []const u8,
+) !void {
+    // output file
+    var ofile = try std.fs.cwd().createFile(fname, .{});
+    defer ofile.close();
+    var bw = std.io.bufferedWriter(ofile.writer());
+    var w = bw.writer();
+
+    // input stream
+    var ifile = std.io.getStdIn();
+    var br = std.io.bufferedReader(ifile.reader());
+    var r = br.reader();
+
+    // read buffer
+    var buffer: [1024 * 4096]u8 = undefined;
+    _ = buffer;
+
+    var bytesRead: usize = 1; // to enter the loop
+    while (bytesRead != 0) {
+        bytesRead = try r.read(&buffer);
+        if (bytesRead > 0) {
+            try w.writeAll(buffer[0..bytesRead]);
+        }
+    }
+    try bw.flush();
 }
 
 /// Launches browser with args
@@ -107,13 +128,11 @@ pub fn main() anyerror!void {
         prefix: []const u8 = "vib-",
         exec: ?[]const u8 = null,
         cleanup: bool = false,
-        @"max-size": u32 = MAX_FILE_SIZE,
         help: bool = false,
 
         // This declares short-hand options for single hyphen
         pub const shorthands = .{
             .e = "exec",
-            .s = "max-size",
             .p = "prefix",
             .t = "tmpdir",
             .o = "output",
@@ -132,9 +151,6 @@ pub fn main() anyerror!void {
             return;
         }
 
-        // read html from stdin
-        const html = try readStdin(alloc, MAX_FILE_SIZE);
-
         // work out the temp filename
         const output_fn = try makeTempFileName(
             alloc,
@@ -149,7 +165,7 @@ pub fn main() anyerror!void {
         }
 
         // write html into temp file
-        try writeToFile(output_fn, html);
+        try writeStdinToFile(output_fn);
 
         // launch browser
         if (o.exec) |browser| {
