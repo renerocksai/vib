@@ -78,7 +78,6 @@ fn writeStdinToFile(
 
     // read buffer
     var buffer: [1024 * 4096]u8 = undefined;
-    _ = buffer;
 
     var bytesRead: usize = 1; // to enter the loop
     while (bytesRead != 0) {
@@ -101,7 +100,7 @@ fn launchBrowser(
         url,
     };
 
-    if (std.ChildProcess.exec(.{ .argv = args[0..], .allocator = alloc })) {
+    if (std.ChildProcess.exec(.{ .argv = args[0..], .allocator = alloc })) |_| {
         return;
     } else |err| {
         std.log.err("Unable to spawn and wait:  {any}", .{err});
@@ -110,11 +109,11 @@ fn launchBrowser(
 
 /// Cleans vib files from tmpdir
 fn cleanup(tmpdir: []const u8, prefix: []const u8) !void {
-    const d = try std.fs.cwd().openDir(tmpdir, .{ .iterate = true });
+    const d = try std.fs.cwd().openIterableDir(tmpdir, .{ .access_sub_paths = true });
     var it = d.iterate();
     while (try it.next()) |f| {
         if (f.kind == .File and std.mem.startsWith(u8, f.name, prefix)) {
-            try d.deleteFile(f.name);
+            try d.dir.deleteFile(f.name);
         }
     }
 }
@@ -172,7 +171,7 @@ pub fn main() anyerror!void {
             try launchBrowser(alloc, browser, output_fn);
         }
     } else |err| {
-        std.debug.print("{s}", .{err});
+        std.debug.print("{!}", .{err});
         try print_help("vib");
     }
 }
