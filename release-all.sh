@@ -12,12 +12,12 @@ function build {
     mode="$2"
 
     if [ "$mode" = "" ] ; then
-        mode="release-safe"
+        mode="ReleaseSafe"
     fi
     echo "Building $target..."
     rm -f zig-out/bin/${EXE}
     rm -f zig-out/bin/${EXE}.exe
-    zig build -Dtarget=$target -D$mode
+    zig build -Dtarget=$target -Doptimize=$mode
     if [ -f zig-out/bin/${EXE} ] ; then
         filn=$RELEASE_DIR/${EXE}-$(getversion)--$target
         mv zig-out/bin/${EXE} $filn
