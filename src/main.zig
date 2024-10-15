@@ -100,7 +100,7 @@ fn launchBrowser(
         url,
     };
 
-    if (std.ChildProcess.exec(.{ .argv = args[0..], .allocator = alloc })) |_| {
+    if (std.process.Child.run(.{ .argv = args[0..], .allocator = alloc })) |_| {
         return;
     } else |err| {
         std.log.err("Unable to spawn and wait:  {any}", .{err});
@@ -109,11 +109,11 @@ fn launchBrowser(
 
 /// Cleans vib files from tmpdir
 fn cleanup(tmpdir: []const u8, prefix: []const u8) !void {
-    const d = try std.fs.cwd().openIterableDir(tmpdir, .{ .access_sub_paths = true });
+    const d = try std.fs.cwd().openDir(tmpdir, .{ .iterate = true, .access_sub_paths = true });
     var it = d.iterate();
     while (try it.next()) |f| {
-        if (f.kind == .File and std.mem.startsWith(u8, f.name, prefix)) {
-            try d.dir.deleteFile(f.name);
+        if (f.kind == .file and std.mem.startsWith(u8, f.name, prefix)) {
+            try d.deleteFile(f.name);
         }
     }
 }

@@ -6,7 +6,7 @@ pub fn gitVersionTag(a: std.mem.Allocator) []const u8 {
         "--sort=-creatordate",
     };
 
-    if (std.ChildProcess.exec(.{ .argv = args[0..], .allocator = a })) |ret| {
+    if (std.process.Child.run(.{ .argv = args[0..], .allocator = a })) |ret| {
         var it = std.mem.split(u8, ret.stdout, "\n");
         if (it.next()) |firstline| {
             return firstline;
